@@ -62,7 +62,7 @@ flowchart LR
 4. Respondo e-mails e mensagens só nos **blocos de comunicação** (10h, 14h30 e 21h), e não o dia inteiro.
 5. À noite, marco os **hábitos** e o **humor** do dia no Painel.
 
-**Toda semana (domingo, cerca de 30 minutos)**
+**Toda semana (domingo de manhã, cerca de 30 minutos)**
 1. Uso a IA para **organizar a Entrada** e classificar tudo na Matriz de Eisenhower.
 2. Defino as **3 prioridades da semana** e peço à IA para **planejar a semana** em blocos de foco.
 3. Gero a **retrospectiva semanal com IA** a partir dos números do Painel.
