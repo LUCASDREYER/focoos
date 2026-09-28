@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FocoOS</title>
+<meta name="description" content="FocoOS: sistema operacional pessoal com quadro Kanban, Matriz de Eisenhower, agenda semanal, Pomodoro, painel de produtividade e assistente de IA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Figtree:wght@400..800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="masthead">
+    <div class="topbar">
+      <a class="brand" href="#quadro" data-act="goto" data-view="quadro" aria-label="FocoOS, ir para o quadro">
+        <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+          <circle class="l-track" cx="16" cy="17.5" r="11"/>
+          <circle class="l-bar" cx="16" cy="17.5" r="11" stroke-dasharray="46 70" transform="rotate(-90 16 17.5)"/>
+          <path class="l-leaf" d="M16 6.5c.3-2.4 1.9-3.8 4.6-4"/>
+        </svg>
+        <span class="brand-name">FocoOS</span>
+        <span class="brand-tag">Sistema Operacional Pessoal</span>
+      </a>
+      <form class="capture" id="capture-form" autocomplete="off">
+        <label class="sr-only" for="capture-input">Capturar tarefa na Entrada</label>
+        <input id="capture-input" type="text" enterkeyhint="done" placeholder="Capturar tarefa… ex.: Estudar SQL !2 @sex #faculdade" title="Atalhos: !1 a !4 = prioridade · @hoje, @amanhã, @sex ou @25/09 = prazo · #faculdade, #trabalho, #pessoal ou #saude = área">
+        <button type="submit" class="btn primary">Capturar</button>
+      </form>
+      <div class="top-actions">
+        <button type="button" class="timer-chip" id="timer-chip" data-act="goto" data-view="foco" hidden><span class="tc-dot"></span><span class="tc-mode">Foco</span><span class="tc-time">25:00</span></button>
+        <button type="button" class="icon-btn" id="theme-btn" data-act="theme-toggle" aria-label="Alternar tema"></button>
+        <button type="button" class="icon-btn" id="settings-btn" data-act="settings" aria-label="Configurações"></button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Seções"></nav>
+  </header>
+
+  <div class="banner" id="banner" hidden>
+    <p><strong>Você está vendo dados de exemplo.</strong> São tarefas fictícias para mostrar o sistema funcionando. Quando quiser, comece com as suas.</p>
+    <div class="row wrap">
+      <button type="button" class="btn sm primary" data-act="sample-clear" data-confirm="Confirmar: apagar exemplos">Começar do zero</button>
+      <button type="button" class="btn sm ghost" data-act="sample-keep">Manter e editar</button>
+    </div>
+  </div>
+
+  <main id="view" class="view"></main>
+</div>
+
+<dialog id="modal" class="modal" aria-label="Detalhes"></dialog>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="tooltip" class="chart-tip" role="tooltip" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
