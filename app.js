@@ -762,6 +762,11 @@
   const ONLY = 'Responda APENAS com as linhas no formato abaixo, uma por linha, sem markdown, sem numeração e sem texto antes ou depois:';
   const taskExample = () => `TAREFA | Q2 | Esta semana | ${iso(addDays(new Date(), 3))} | 2 | Faculdade | Estudar JOINs de SQL`;
   const blockExample = () => `BLOCO | ${iso(addDays(new Date(), 1))} | 19:00 | 20:30 | Estudar para a prova de Banco de Dados`;
+  // Algumas IAs trocam a palavra-chave (TAREFA, BLOCO, SUB) pelo nome da tarefa; o prompt deixa a regra explícita.
+  const TASK_LINE = 'TAREFA | Quadrante | Lista | Prazo | Pomodoros | Área | Título da tarefa';
+  const keepWord = (w) => `Toda linha começa exatamente com a palavra ${w}; não troque essa palavra por outro texto.`;
+  const taskFormat = () => lines(TASK_LINE, keepWord('TAREFA'), 'Exemplo:', taskExample());
+  const blockFormat = () => lines('BLOCO | Data | Início | Fim | Título do bloco', keepWord('BLOCO'), 'Exemplo:', blockExample());
   const AI_FORMAT = () => ({
     dump: taskExample(), triage: taskExample(), plan: blockExample(),
     split: 'SUB | Revisar os slides da aula 3', summary: `RESUMO | Ponto principal discutido\n${taskExample()}`,
@@ -830,12 +835,12 @@
     const goals = weekGoals();
     if (a.tool === 'dump') {
       if (!a.input.trim()) return { error: 'Escreva o que está na sua cabeça antes de gerar o prompt.' };
-      return { text: lines('Você é meu assistente de produtividade. Transforme o texto abaixo em tarefas claras e acionáveis, cada uma começando com um verbo no infinitivo.', ctxLine(), '', EISEN, '', TASK_FIELDS, '', ONLY, taskExample(), '', 'Texto:', '"""', a.input.trim(), '"""') };
+      return { text: lines('Você é meu assistente de produtividade. Transforme o texto abaixo em tarefas claras e acionáveis, cada uma começando com um verbo no infinitivo.', ctxLine(), '', EISEN, '', TASK_FIELDS, '', ONLY, taskFormat(), '', 'Texto:', '"""', a.input.trim(), '"""') };
     }
     if (a.tool === 'triage') {
       const inbox = S.tasks.filter((t) => t.list === 'inbox' && !t.archived);
       if (!inbox.length) return { error: 'A Entrada está vazia. Capture algumas tarefas primeiro.' };
-      return { text: lines('Você é meu assistente de produtividade. Organize os itens da minha caixa de entrada (método GTD) usando a Matriz de Eisenhower.', ctxLine(), goals.length ? `Minhas prioridades desta semana: ${goals.join('; ')}.` : '', '', EISEN, '', TASK_FIELDS, 'Mantenha o título de cada item exatamente como está escrito abaixo (isso é necessário para a importação).', '', ONLY, taskExample(), '', 'Itens da Entrada:', ...inbox.map((t) => `- ${t.title}`)) };
+      return { text: lines('Você é meu assistente de produtividade. Organize os itens da minha caixa de entrada (método GTD) usando a Matriz de Eisenhower.', ctxLine(), goals.length ? `Minhas prioridades desta semana: ${goals.join('; ')}.` : '', '', EISEN, '', TASK_FIELDS, 'Mantenha o título de cada item exatamente como está escrito abaixo (isso é necessário para a importação).', '', ONLY, taskFormat(), '', 'Itens da Entrada:', ...inbox.map((t) => `- ${t.title}`)) };
     }
     if (a.tool === 'plan') {
       const ws = startOfWeek(new Date());
@@ -843,16 +848,16 @@
       const evs = days.flatMap((k) => eventsOn(k).map((e) => `- ${DOW[parseISO(k).getDay()]} ${k} ${e.start}–${e.end} ${e.title}`));
       const open = openTasks().filter((t) => t.q !== 4).sort((x, y) => (x.q || 5) - (y.q || 5));
       if (!open.length) return { error: 'Não há tarefas abertas para planejar.' };
-      return { text: lines('Você é meu assistente de planejamento. Monte o restante da minha semana usando time blocking (blocos de tempo na agenda).', ctxLine(), `Planeje de ${ddmm(days[0])} a ${ddmm(days[days.length - 1])}.`, goals.length ? `Prioridades da semana: ${goals.join('; ')}.` : '', '', 'Compromissos já marcados (não sobreponha):', ...(evs.length ? evs : ['- nenhum']), '', 'Tarefas abertas (prioridade · prazo · pomodoros estimados · título):', ...open.map((t) => `- ${t.q ? 'Q' + t.q : 'sem prioridade'} · ${t.due || 'sem prazo'} · ${t.est || '?'} · ${t.title}`), '', `Preferências: ${a.input.trim() || 'nenhuma'}`, '', 'Regras:', '- Crie blocos de 25 a 120 minutos, começando pelas tarefas Q1 e depois Q2, respeitando os prazos.', '- Não agende nada entre 23h e 7h. Inclua pausas e pelo menos um período livre de descanso.', '- Use o título da tarefa como título do bloco.', '', ONLY, blockExample()) };
+      return { text: lines('Você é meu assistente de planejamento. Monte o restante da minha semana usando time blocking (blocos de tempo na agenda).', ctxLine(), `Planeje de ${ddmm(days[0])} a ${ddmm(days[days.length - 1])}.`, goals.length ? `Prioridades da semana: ${goals.join('; ')}.` : '', '', 'Compromissos já marcados (não sobreponha):', ...(evs.length ? evs : ['- nenhum']), '', 'Tarefas abertas (prioridade · prazo · pomodoros estimados · título):', ...open.map((t) => `- ${t.q ? 'Q' + t.q : 'sem prioridade'} · ${t.due || 'sem prazo'} · ${t.est || '?'} · ${t.title}`), '', `Preferências: ${a.input.trim() || 'nenhuma'}`, '', 'Regras:', '- Crie blocos de 25 a 120 minutos, começando pelas tarefas Q1 e depois Q2, respeitando os prazos.', '- Não agende nada entre 23h e 7h. Inclua pausas e pelo menos um período livre de descanso.', '- Use o título da tarefa como título do bloco.', '', ONLY, blockFormat()) };
     }
     if (a.tool === 'split') {
       const t = task(a.taskId);
       if (!t) return { error: 'Escolha uma tarefa.' };
-      return { text: lines('Divida a tarefa abaixo em 3 a 8 passos pequenos e concretos, na ordem certa, cada um possível de fazer em até 25 minutos.', `Tarefa: ${t.title}`, t.desc ? `Detalhes: ${t.desc}` : '', t.due ? `Prazo: ${ddmm(t.due)}` : '', '', ONLY, 'SUB | Revisar os slides da aula 3') };
+      return { text: lines('Divida a tarefa abaixo em 3 a 8 passos pequenos e concretos, na ordem certa, cada um possível de fazer em até 25 minutos.', `Tarefa: ${t.title}`, t.desc ? `Detalhes: ${t.desc}` : '', t.due ? `Prazo: ${ddmm(t.due)}` : '', '', ONLY, 'SUB | Passo', keepWord('SUB'), 'Exemplo:', 'SUB | Revisar os slides da aula 3') };
     }
     if (a.tool === 'summary') {
       if (!a.input.trim()) return { error: 'Cole as anotações antes de gerar o prompt.' };
-      return { text: lines('Resuma as anotações abaixo (de uma aula ou reunião) e extraia os próximos passos.', ctxLine(), '', '1. Escreva de 3 a 6 linhas de resumo, cada uma começando com "RESUMO | ".', '2. Depois, liste as tarefas e próximos passos no formato TAREFA.', '', EISEN, '', TASK_FIELDS, '', ONLY, 'RESUMO | Ponto principal discutido', taskExample(), '', 'Anotações:', '"""', a.input.trim(), '"""') };
+      return { text: lines('Resuma as anotações abaixo (de uma aula ou reunião) e extraia os próximos passos.', ctxLine(), '', '1. Escreva de 3 a 6 linhas de resumo, cada uma começando com "RESUMO | ".', '2. Depois, liste as tarefas e próximos passos no formato TAREFA.', '', EISEN, '', TASK_FIELDS, '', ONLY, 'RESUMO | Ponto principal discutido', TASK_LINE, 'Toda linha começa exatamente com a palavra RESUMO ou TAREFA; não troque essas palavras por outro texto.', 'Exemplo de tarefa:', taskExample(), '', 'Anotações:', '"""', a.input.trim(), '"""') };
     }
     if (a.tool === 'msg') {
       const m = a.msg;
@@ -891,7 +896,8 @@
       else rest.push(p);
     });
     t.title = rest.sort((x, y) => y.length - x.length)[0] || '';
-    return t.title ? t : null;
+    // Sem nenhum campo reconhecido é um cabeçalho ("Quadrante | Lista | ..."), não uma tarefa.
+    return t.title && (t.q || t.list || t.due || t.area) ? t : null;
   }
   function parseBlockParts(parts) {
     const b = { date: '', start: '', end: '', title: '' };
@@ -913,20 +919,29 @@
     if (!b.end || minutes(b.end) <= minutes(b.start)) { const e = Math.min(minutes(b.start) + 50, 23 * 60 + 59); b.end = `${pad(Math.floor(e / 60))}:${pad(e % 60)}`; }
     return b;
   }
-  function parseAI(text) {
+  function parseAI(text, tool) {
     const out = { tasks: [], blocks: [], subs: [], summary: [] };
+    const loose = [];
     String(text || '').split(/\r?\n/).forEach((raw) => {
       let line = raw.replace(/\*\*|__|`/g, '').trim();
       line = line.replace(/^(?:[-*•>]+\s*|\d+[.)]\s+)+/, '').trim();
+      line = line.replace(/^(tarefa|task|bloco|block|sub|subtarefa|passo|resumo)\s*[:–—]\s*/i, '$1 | ');
       line = line.replace(/^\|/, '').replace(/\|$/, '').trim();
-      if (!line.includes('|')) return;
+      if (!line.includes('|')) { if (line) loose.push(line); return; }
       const parts = line.split('|').map((p) => p.trim());
-      const tag = norm(parts.shift());
-      if (tag === 'tarefa' || tag === 'task') { const t = parseTaskParts(parts); if (t) out.tasks.push(t); }
-      else if (tag === 'bloco' || tag === 'block') { const b = parseBlockParts(parts); if (b) out.blocks.push(b); }
-      else if (tag === 'sub' || tag === 'subtarefa' || tag === 'passo') { const s = parts.join(' | ').trim(); if (s) out.subs.push(s); }
-      else if (tag === 'resumo') { const s = parts.join(' | ').trim(); if (s) out.summary.push(s); }
+      const tag = norm(parts[0]);
+      const rest = parts.slice(1);
+      if (tag === 'tarefa' || tag === 'task') { const t = parseTaskParts(rest); if (t) out.tasks.push(t); }
+      else if (tag === 'bloco' || tag === 'block') { const b = parseBlockParts(rest); if (b) out.blocks.push(b); }
+      else if (tag === 'sub' || tag === 'subtarefa' || tag === 'passo') { const s = rest.join(' | ').trim(); if (s) out.subs.push(s); }
+      else if (tag === 'resumo') { const s = rest.join(' | ').trim(); if (s) out.summary.push(s); }
+      // Linha sem a palavra-chave (a IA trocou "TAREFA" pelo nome da tarefa): um quadrante Q1 a Q4 indica tarefa.
+      else if (parts.some((p) => /^q\s*[1-4]\b/.test(norm(p)))) { const t = parseTaskParts(parts); if (t) out.tasks.push(t); }
+      // Bloco sem a palavra BLOCO: data e horário na mesma linha.
+      else if (tool === 'plan' && parts.some((p) => parseDate(p)) && parts.some((p) => /\d{1,2}[:h]\d{2}/.test(p))) { const b = parseBlockParts(parts); if (b) out.blocks.push(b); }
     });
+    // Passos sem "SUB |": na ferramenta de quebrar tarefa, cada linha da lista vira um passo.
+    if (tool === 'split' && !out.subs.length) out.subs = loose.filter((l) => l.length >= 3 && l.length <= 160 && !/:$/.test(l));
     return out;
   }
   function logSummary(l) {
@@ -949,11 +964,11 @@
       S.aiLog.unshift({ at: stamp, tool: 'retro' });
       save();
       a.response = '';
-      a.result = { ok: true, html: 'Retrospectiva salva. <a href="#painel" data-act="goto" data-view="painel">Ver no Painel</a>' };
+      a.result = { ok: true, html: '<p>Retrospectiva salva. <a href="#painel" data-act="goto" data-view="painel">Ver no Painel</a></p>' };
       render();
       return;
     }
-    const p = parseAI(text);
+    const p = parseAI(text, a.tool);
     let created = 0, updated = 0, blocks = 0, subs = 0;
     p.tasks.forEach((x) => {
       const ex = S.tasks.find((t) => !t.archived && t.list !== 'done' && norm(t.title) === norm(x.title));
@@ -976,7 +991,7 @@
       if (t) { p.subs.forEach((s) => t.checklist.push({ id: uid(), text: s, done: false })); subs = p.subs.length; }
     }
     if (!created && !updated && !blocks && !subs && !p.summary.length) {
-      a.result = { ok: false, html: 'Não encontrei linhas no formato esperado. A resposta precisa ter linhas começando com <code>TAREFA |</code>, <code>BLOCO |</code> ou <code>SUB |</code>. Se a IA respondeu de outro jeito, peça a ela: "responda só no formato pedido".' };
+      a.result = { ok: false, html: '<p>Não encontrei tarefas na resposta. Cada linha precisa começar com <code>TAREFA |</code>, <code>BLOCO |</code> ou <code>SUB |</code>. Se a IA respondeu de outro jeito, peça a ela: “responda só no formato pedido”.</p>' };
       render();
       return;
     }
