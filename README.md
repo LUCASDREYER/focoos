@@ -4,7 +4,7 @@
 >
 > **Aluno:** Lucas Mari Dreyer · **Curso:** Graduação em Inteligência Artificial e Automação Digital
 
-**Acesse o sistema:** [lucasdreyer.github.io/focoos](https://lucasdreyer.github.io/focoos/)
+**Acesse o sistema:** [lucasdreyer.github.io/focoos](https://lucasdreyer.github.io/focoos/) · **Vídeo pitch:** [Focoos.mp4 no Google Drive](https://drive.google.com/file/d/1ycl2n8wRQqFDk7cK16Oxm4ygXhz5h6oy/view?usp=sharing)
 
 ![Quadro do FocoOS](prints/01-quadro.png)
 
